@@ -228,14 +228,8 @@
 
     function openTerminal(os) {
       // ttyd 자체 인증(-c) 사용 → 창이 뜰 때 브라우저 인증창이 나타남
-      const w = 900, h = 600;
-      const left = (screen.width - w) / 2;
-      const top = (screen.height - h) / 2;
-      window.open(
-        os.path,
-        `term_${os.name}_${os.ver}`,
-        `width=${w},height=${h},left=${left},top=${top},resizable=yes,scrollbars=yes`
-      );
+      // feature string 없이 호출하면 팝업 창 대신 새 탭으로 열림
+      window.open(os.path, `term_${os.name}_${os.ver}`);
     }
   </script>
 </body>
