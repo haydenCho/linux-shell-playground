@@ -1,0 +1,72 @@
+# OS Shell Playground — 스톡 이미지 + 마운트로만 구성 (Dockerfile 없음)
+# docker compose up 하면 nginx + ttyd + OS 5개가 모두 준비된다.
+
+services:
+  # ── 웹 서버 / 리버스 프록시 ──
+  nginx:
+    image: nginx:alpine
+    container_name: osp-nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./nginx/html:/usr/share/nginx/html:ro
+    depends_on:
+      - ttyd
+    restart: unless-stopped
+
+  # ── ttyd 서버 (docker exec 로 각 OS 에 연결) ──
+  ttyd:
+    image: docker:cli               # docker CLI 포함 (docker exec 용)
+    container_name: osp-ttyd
+    env_file:
+      - .env                        # TTY_USER / TTY_PASS 주입
+    volumes:
+      - ./ttyd/ttyd:/usr/local/bin/ttyd:ro       # 받아둔 ttyd 바이너리
+      - ./ttyd/start.sh:/usr/local/bin/start.sh:ro
+      - /var/run/docker.sock:/var/run/docker.sock  # 호스트 도커에 접근
+    entrypoint: ["/bin/sh", "/usr/local/bin/start.sh"]
+    depends_on:
+      - ubuntu2404
+      - ubuntu2604
+      - rocky89
+      - rocky93
+      - kali
+    restart: unless-stopped
+
+  # ── OS 컨테이너 5개 (스톡 이미지, 셸만 살려둠) ──
+  #  container_name 이 start.sh / nginx 의 docker exec 대상과 일치해야 함
+  ubuntu2404:
+    image: ubuntu:24.04
+    container_name: ubuntu2404
+    command: sleep infinity
+    tty: true
+    stdin_open: true
+
+  ubuntu2604:
+    image: ubuntu:26.04            # 정식 태그 없으면 devel 등으로 교체 필요
+    container_name: ubuntu2604
+    command: sleep infinity
+    tty: true
+    stdin_open: true
+
+  rocky89:
+    image: rockylinux:8.9
+    container_name: rocky89
+    command: sleep infinity
+    tty: true
+    stdin_open: true
+
+  rocky93:
+    image: rockylinux:9.3
+    container_name: rocky93
+    command: sleep infinity
+    tty: true
+    stdin_open: true
+
+  kali:
+    image: kalilinux/kali-rolling:latest
+    container_name: kali
+    command: sleep infinity
+    tty: true
+    stdin_open: true

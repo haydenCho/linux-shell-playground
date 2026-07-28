@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OS Shell Playground</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg-top: #f4f4f8;
+      --bg-bot: #e7e7ef;
+      --title: #2a2d3a;
+      --muted: #6b6f82;
+      --foot: #8b8fa3;
+      --toggle-bg: rgba(255,255,255,0.7);
+      --toggle-border: rgba(0,0,0,0.12);
+    }
+    html[data-theme="dark"] {
+      --bg-top: #16181f;
+      --bg-bot: #0d0e14;
+      --title: #e8ecf5;
+      --muted: #9aa0b8;
+      --foot: #676c82;
+      --toggle-bg: rgba(255,255,255,0.08);
+      --toggle-border: rgba(255,255,255,0.16);
+    }
+
+    body {
+      min-height: 100vh;
+      font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+      background: linear-gradient(180deg, var(--bg-top) 0%, var(--bg-bot) 100%);
+      color: var(--title);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 48px 20px;
+      transition: background 0.3s ease, color 0.3s ease;
+    }
+
+    /* 테마 토글 */
+    .theme-toggle {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 8px 16px;
+      border-radius: 999px;
+      border: 1px solid var(--toggle-border);
+      background: var(--toggle-bg);
+      color: var(--title);
+      font-size: 0.85rem;
+      cursor: pointer;
+      backdrop-filter: blur(6px);
+      transition: transform 0.2s ease, background 0.3s ease, color 0.3s ease;
+    }
+    .theme-toggle:hover { transform: translateY(-2px); }
+
+    header { text-align: center; margin-bottom: 46px; animation: fadeDown 0.6s ease both; }
+    header h1 { font-size: 2.1rem; letter-spacing: -0.5px; }
+    header p { margin-top: 10px; color: var(--muted); font-size: 0.95rem; }
+
+    .grid {
+      display: flex;
+      flex-direction: column;
+      gap: 26px;
+      width: 100%;
+      max-width: 460px;
+    }
+
+    /* 메탈 알약 버튼 */
+    .os-btn {
+      position: relative;
+      isolation: isolate;
+      border: none;
+      cursor: pointer;
+      width: 100%;
+      padding: 24px 26px;
+      border-radius: 999px;
+      color: #fff;
+      font-size: 1.15rem;
+      font-weight: 700;
+      letter-spacing: 0.2px;
+      text-shadow: 0 1px 4px rgba(0, 0, 0, 0.45);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      overflow: hidden;
+
+      background:
+        radial-gradient(130% 130% at 50% 42%,
+          var(--c-light) 0%,
+          var(--c-mid) 46%,
+          var(--c-dark) 100%);
+
+      /* 흰색 베젤 제거 — 컬러 글로우 + 금속 하이라이트/음영만 */
+      box-shadow:
+        0 10px 28px var(--c-glow),
+        inset 0 1px 2px rgba(255, 255, 255, 0.35),
+        inset 0 -8px 16px rgba(0, 0, 0, 0.32);
+
+      transition: transform 0.28s cubic-bezier(.2,.9,.25,1.3),
+                  box-shadow 0.28s ease,
+                  filter 0.28s ease;
+      animation: fadeUp 0.55s ease both;
+    }
+    .os-btn:nth-child(1) { animation-delay: 0.05s; }
+    .os-btn:nth-child(2) { animation-delay: 0.11s; }
+    .os-btn:nth-child(3) { animation-delay: 0.17s; }
+    .os-btn:nth-child(4) { animation-delay: 0.23s; }
+    .os-btn:nth-child(5) { animation-delay: 0.29s; }
+
+    /* 대각선 광택 스윕 */
+    .os-btn::after {
+      content: "";
+      position: absolute;
+      top: -40%;
+      left: -60%;
+      width: 40%;
+      height: 180%;
+      transform: skewX(-22deg);
+      background: linear-gradient(90deg,
+        rgba(255,255,255,0) 0%,
+        rgba(255,255,255,0.55) 50%,
+        rgba(255,255,255,0) 100%);
+      pointer-events: none;
+      z-index: 1;
+      transition: left 0.55s ease;
+    }
+    .os-btn > * { position: relative; z-index: 2; }
+
+    .os-btn:hover {
+      transform: translateY(-6px) scale(1.045);
+      filter: saturate(1.15) brightness(1.06);
+      box-shadow:
+        0 20px 44px var(--c-glow),
+        inset 0 1px 2px rgba(255, 255, 255, 0.4),
+        inset 0 -8px 16px rgba(0, 0, 0, 0.32);
+    }
+    .os-btn:hover::after { left: 120%; }
+    .os-btn:active { transform: translateY(-2px) scale(1.0); }
+
+    .os-ver { font-weight: 400; opacity: 0.9; font-size: 0.95rem; }
+
+    footer { margin-top: 42px; color: var(--foot); font-size: 0.8rem; }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(18px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fadeDown {
+      from { opacity: 0; transform: translateY(-16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+  <button class="theme-toggle" id="themeToggle">다크 모드</button>
+
+  <header>
+    <h1>OS Shell Playground</h1>
+    <p>사용할 운영체제를 선택하세요. 새 창에서 터미널이 열립니다.</p>
+  </header>
+
+  <main class="grid" id="grid"></main>
+
+  <footer>Docker 실습 프로젝트 · ttyd + nginx</footer>
+
+  <script>
+    // ── 테마: 기본값은 사용자(OS) 설정을 따름, 토글로 수동 변경 ──
+    const root = document.documentElement;
+    const toggleBtn = document.getElementById("themeToggle");
+
+    function applyTheme(theme) {
+      root.setAttribute("data-theme", theme);
+      toggleBtn.textContent = theme === "dark" ? "라이트 모드" : "다크 모드";
+    }
+
+    // 저장값 > OS 설정 순으로 초기 테마 결정
+    const saved = (() => { try { return localStorage.getItem("theme"); } catch (e) { return null; } })();
+    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    applyTheme(saved || (prefersDark ? "dark" : "light"));
+
+    toggleBtn.addEventListener("click", () => {
+      const next = root.getAttribute("data-theme") === "dark" ? "light" : "dark";
+      applyTheme(next);
+      try { localStorage.setItem("theme", next); } catch (e) {}
+    });
+
+    // 수동 저장값이 없으면 OS 설정 변경을 실시간 반영
+    window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", (e) => {
+      let stored = null;
+      try { stored = localStorage.getItem("theme"); } catch (err) {}
+      if (!stored) applyTheme(e.matches ? "dark" : "light");
+    });
+
+    // ── OS 목록: Ubuntu=보라, Rocky=분홍, Kali=파랑 ──
+    const systems = [
+      { name: "Ubuntu",      ver: "24.04 LTS", path: "/term/ubuntu2404/",
+        light: "#c084fc", mid: "#9333ea", dark: "#6b21a8", glow: "rgba(147,51,234,0.5)" },
+      { name: "Ubuntu",      ver: "26.04",     path: "/term/ubuntu2604/",
+        light: "#c084fc", mid: "#9333ea", dark: "#6b21a8", glow: "rgba(147,51,234,0.5)" },
+      { name: "Rocky Linux", ver: "8.9",       path: "/term/rocky89/",
+        light: "#f472b6", mid: "#db2777", dark: "#9d174d", glow: "rgba(219,39,119,0.5)" },
+      { name: "Rocky Linux", ver: "9.3",       path: "/term/rocky93/",
+        light: "#f472b6", mid: "#db2777", dark: "#9d174d", glow: "rgba(219,39,119,0.5)" },
+      { name: "Kali Linux",  ver: "rolling",   path: "/term/kali/",
+        light: "#93c5fd", mid: "#3b82f6", dark: "#1d4ed8", glow: "rgba(59,130,246,0.5)" },
+    ];
+
+    const grid = document.getElementById("grid");
+
+    systems.forEach((os) => {
+      const btn = document.createElement("button");
+      btn.className = "os-btn";
+      btn.style.setProperty("--c-light", os.light);
+      btn.style.setProperty("--c-mid", os.mid);
+      btn.style.setProperty("--c-dark", os.dark);
+      btn.style.setProperty("--c-glow", os.glow);
+      btn.innerHTML = `
+        <span>${os.name}</span>
+        <span class="os-ver">${os.ver}</span>
+      `;
+      btn.addEventListener("click", () => openTerminal(os));
+      grid.appendChild(btn);
+    });
+
+    function openTerminal(os) {
+      // ttyd 자체 인증(-c) 사용 → 창이 뜰 때 브라우저 인증창이 나타남
+      const w = 900, h = 600;
+      const left = (screen.width - w) / 2;
+      const top = (screen.height - h) / 2;
+      window.open(
+        os.path,
+        `term_${os.name}_${os.ver}`,
+        `width=${w},height=${h},left=${left},top=${top},resizable=yes,scrollbars=yes`
+      );
+    }
+  </script>
+</body>
+</html>
