@@ -29,15 +29,10 @@
 │   ├── default.conf          # 정적 페이지 서빙 + /term/<os> 리버스 프록시 설정
 │   └── html/
 │       └── index.html        # OS 선택 페이지
-├── ttyd/
-│   ├── ttyd                  # ttyd 바이너리
-│   └── start.sh               # 포트별 ttyd 인스턴스 5개 기동 스크립트
-└── os/                        # OS별 참고/작업용 디렉토리 (현재 비어 있음, Dockerfile 없음)
-    ├── ubuntu2404/
-    ├── ubuntu2604/
-    ├── rocky89/
-    ├── rocky93/
-    └── kali/
+└── ttyd/
+    ├── ttyd                  # ttyd 바이너리
+    └── start.sh               # 포트별 ttyd 인스턴스 5개 기동 스크립트
+
 ```
 
 <br/>
